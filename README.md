@@ -1,5 +1,5 @@
-# SlackCore
-SlackCore is a proprietary bot used to kick people from Slack who shouldn't be there.
+# NeucoreSlack-Link
+NeucoreSlack-Link is a proprietary bot used to kick people from Slack who shouldn't be there.
 
 ## Requirements
 * Python ≥ 3.7
