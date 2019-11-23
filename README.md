@@ -10,7 +10,7 @@ Neucore-Slack-Link is a proprietary bot used to kick people from Slack who shoul
   * If you are using MySQL, the Authentication Method **MUST** be the Legacy Version. PDO does not support the use of `caching_sha2_password` Authentication. 
 * A Neucore Instance
   * Plus a Neucore app with the appropriate roles as listed in `config.ini`
-*A Slack Workspace
+* A Slack Workspace
   * Plus a Slack app with the appropriate roles as listed in `config.ini`
   
 ## Running the Checker
