@@ -1,4 +1,4 @@
-# NeucoreSlack-Link
+# Neucore-Slack-Link
 NeucoreSlack-Link is a proprietary bot used to kick people from Slack who shouldn't be there.
 
 ## Requirements
