@@ -101,9 +101,9 @@ def checkCharacters():
             while True:
                 try:
                     if nextPage != "First":
-                        thisPage = slackApp.users_list(cursor=str(nextPage))
+                        thisPage = slackApp.users_list(cursor=str(nextPage),limit=500)
                     else:
-                        thisPage = slackApp.users_list()
+                        thisPage = slackApp.users_list(limit=500)
                     break
                 except:
                     print("Failed to get the user list. Trying again in a sec.")
