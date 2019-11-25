@@ -268,26 +268,34 @@ def checkCharacters():
             if slackCharacters[characters]["Main Character ID"] != 0 and slackCharacters[characters]["Account Status"] != "Terminated":
                 requestURL = coreInfo["CoreURL"] + "api/app/v2/groups/" + str(slackCharacters[characters]["Main Character ID"])
                 
-                coreRequest = requests.get(requestURL, headers=coreHeader)
-                
-                if str(coreRequest.status_code) == "200":
+                while True:
+                    coreRequest = requests.get(requestURL, headers=coreHeader)
                     
-                    groupList = json.loads(coreRequest.text)
-                    
-                    memberFound = False
-                    for eachGroup in groupList:
-                        if eachGroup["name"] == "member":
-                            memberFound = True
-                            
-                    if not memberFound:
-                        slackCharacters[characters]["To Remove"] = True
-                        slackCharacters[characters]["Reason"] = "Core Disabled"
-                        removalsByReason["Core Disabled"] += 1                        
+                    if str(coreRequest.status_code) == "200":
                         
-                else:
-                    slackCharacters[characters]["To Remove"] = True
-                    slackCharacters[characters]["Reason"] = "No Core Account"
-                    removalsByReason["No Core Account"] += 1
+                        groupList = json.loads(coreRequest.text)
+                        
+                        memberFound = False
+                        for eachGroup in groupList:
+                            if eachGroup["name"] == "member":
+                                memberFound = True
+                                
+                        if not memberFound:
+                            slackCharacters[characters]["To Remove"] = True
+                            slackCharacters[characters]["Reason"] = "Core Disabled"
+                            removalsByReason["Core Disabled"] += 1
+                            
+                        break
+                            
+                    elif str(coreRequest.status_code) == "404":
+                        slackCharacters[characters]["To Remove"] = True
+                        slackCharacters[characters]["Reason"] = "No Core Account"
+                        removalsByReason["No Core Account"] += 1
+                        break
+                    
+                    else:
+                        print("An error occured while checking the character " + str(slackCharacters[characters]["Main Character ID"]) + "... Trying again in a sec.")
+                        time.sleep(1)
         
         timeChecks["Time to Check Accounts Against Core"] = time.perf_counter() - sum(listOfTimes)
         listOfTimes.append(timeChecks["Time to Check Accounts Against Core"])        
