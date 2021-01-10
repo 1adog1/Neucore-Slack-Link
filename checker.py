@@ -45,6 +45,54 @@ if Path(dataFile(configPathOverride, "/config") + "/config.ini").is_file():
     slackInfo = config["Slack"]
     debugMode = config.getboolean("Slack", "Debug")
     
+    ############################
+    #  Enviromental Overrides  #
+    ############################
+    
+    #Database
+    if os.environ.get("SLACKCORE_DB_SERVER") != None:
+        databaseInfo["DatabaseServer"] = os.environ.get("SLACKCORE_DB_SERVER")
+
+    if os.environ.get("SLACKCORE_DB_PORT") != None:
+        databaseInfo["DatabasePort"] = os.environ.get("SLACKCORE_DB_PORT")
+
+    if os.environ.get("SLACKCORE_DB_USERNAME") != None:
+        databaseInfo["DatabaseUsername"] = os.environ.get("SLACKCORE_DB_USERNAME")
+
+    if os.environ.get("SLACKCORE_DB_PASSWORD") != None:
+        databaseInfo["DatabasePassword"] = os.environ.get("SLACKCORE_DB_PASSWORD")
+
+    if os.environ.get("SLACKCORE_DB_DBNAME") != None:
+        databaseInfo["DatabaseName"] = os.environ.get("SLACKCORE_DB_DBNAME")
+    
+    #Core
+    if os.environ.get("SLACKCORE_CORE_URL") != None:
+        coreInfo["CoreURL"] = os.environ.get("SLACKCORE_CORE_URL")
+
+    if os.environ.get("SLACKCORE_CORE_ID") != None:
+        coreInfo["AppID"] = os.environ.get("SLACKCORE_CORE_ID")
+
+    if os.environ.get("SLACKCORE_CORE_SECRET") != None:
+        coreInfo["AppSecret"] = os.environ.get("SLACKCORE_CORE_SECRET")
+    
+    #Slack
+    if os.environ.get("SLACKCORE_NOTIFICATION_CHANNEL") != None:
+        slackInfo["NotificationChannel"] = os.environ.get("SLACKCORE_NOTIFICATION_CHANNEL")
+    
+    if os.environ.get("SLACKCORE_APP_TOKEN") != None:
+        slackInfo["AppToken"] = os.environ.get("SLACKCORE_APP_TOKEN")
+    
+    if os.environ.get("SLACKCORE_BOT_TOKEN") != None:
+        slackInfo["BotToken"] = os.environ.get("SLACKCORE_BOT_TOKEN")
+        
+    #Debug Mode
+    if os.environ.get("SLACKCORE_DEBUG_MODE") != None:
+        booleanInterpreters = {"yes": True, "true": True, 1: True, "1": True, "no": False, "false": False, 0: False, "0": False}
+    
+        debugMode = booleanInterpreters[os.environ.get("SLACKCORE_DEBUG_MODE").lower()]
+    
+
+
 else:
     raise Warning("No Configuration File Found!")
 
@@ -62,6 +110,14 @@ removalNotification = """
 Hello <@{user_id}>, it seems you aren't supposed to be here anymore. You may've left Brave, done something naughty, or not fixed an invalid ESI token in the proper time period. 
 
 Whatever the reason, you're about to be kicked from Slack. Bye! 
+"""
+
+emailNotification = """
+
+*ADDENDUM: You were marked for removal because your current Slack email does not match the one you signed up with. Please follow the below instructions ASAP to avoid being removed.*
+
+1. Login to https://slack.bravecollective.com/ on your *Main Character*
+2. In the far left box, request an invite using the email currently tied to your Slack Account. You can find this by selecting `Profile & account` from the dropdown in the upper-left corner of Slack.
 """
     
 def checkCharacters():
@@ -83,10 +139,6 @@ def checkCharacters():
         slackBot = SlackClient.WebClient(slackInfo["BotToken"])
         
         sq1Database = DatabaseConnector.connect(user=databaseInfo["DatabaseUsername"], password=databaseInfo["DatabasePassword"], host=databaseInfo["DatabaseServer"] , port=int(databaseInfo["DatabasePort"]), database=databaseInfo["DatabaseName"])
-
-        checkCursor = sq1Database.cursor(buffered=True)
-        secondaryCheckCursor = sq1Database.cursor(buffered=True)
-        updateCursor = sq1Database.cursor(buffered=True)
 
         startTime = time.perf_counter()
         listOfTimes.append(startTime)
@@ -134,10 +186,12 @@ def checkCharacters():
         ###############################
         #  Syncs up duplicate emails  #
         ###############################
+        checkCursor = sq1Database.cursor(buffered=True)
         checkQuery = ("SELECT * FROM invite")
         checkCursor.execute(checkQuery)
         
         for (character_id, character_name, slack_email, email_history, invited_at, account_slack_id, account_status) in checkCursor:
+            secondaryCheckCursor = sq1Database.cursor(buffered=True)
             secondaryCheckQuery = ("SELECT * FROM invite WHERE email=%s")
             secondaryCheckCursor.execute(secondaryCheckQuery, (slack_email,))
             
@@ -156,14 +210,19 @@ def checkCharacters():
                         validID = secondary_account_slack_id
                         validAccountStatus = secondary_account_status
                         
+            secondaryCheckCursor.close()
+
             if checkThisEmail and accountIDsToCompare.count(accountIDsToCompare[0]) != len(accountIDsToCompare):
                 if not debugMode:
+                    updateCursor = sq1Database.cursor(buffered=True)
                     updateStatement = ("UPDATE invite SET slack_id=%s, account_status=%s WHERE email=%s")
                     updateCursor.execute(updateStatement, (validID,validAccountStatus,slack_email))
                     sq1Database.commit()
+                    updateCursor.close()
                 
                 syncedEmails += 1
-                    
+                        
+        checkCursor.close()
         
         timeChecks["Time to Sync Duplicate Emails"] = time.perf_counter() - sum(listOfTimes)
         listOfTimes.append(timeChecks["Time to Sync Duplicate Emails"])
@@ -174,7 +233,8 @@ def checkCharacters():
         for characters in slackCharacters:
             idCheckExists = False
             emailCheckExists = False
-        
+            
+            checkCursor = sq1Database.cursor(buffered=True)
             checkQuery = ("SELECT * FROM invite WHERE slack_id=%s")
             checkCursor.execute(checkQuery, (slackCharacters[characters]["ID"],))
             
@@ -193,9 +253,12 @@ def checkCharacters():
                     if account_status != slackCharacters[characters]["Account Status"]:
                         
                         if not debugMode:
+                            updateCursor = sq1Database.cursor(buffered=True)
                             updateStatement = ("UPDATE invite SET account_status=%s WHERE slack_id=%s")
                             updateCursor.execute(updateStatement, (slackCharacters[characters]["Account Status"],slackCharacters[characters]["ID"]))
                             sq1Database.commit()
+                            
+                            updateCursor.close()
                         
                         if slackCharacters[characters]["Account Status"] == "Active":
                             reactivatedAccounts += 1
@@ -204,8 +267,10 @@ def checkCharacters():
                             
                     duplicateRowTimestamps.append(invited_at)
                     
+            checkCursor.close()
             
             if not idCheckExists:
+                secondaryCheckCursor = sq1Database.cursor(buffered=True)
                 secondaryCheckQuery = ("SELECT * FROM invite WHERE email=%s")
                 secondaryCheckCursor.execute(secondaryCheckQuery, (slackCharacters[characters]["Email"],))
                 
@@ -222,14 +287,19 @@ def checkCharacters():
                         slackCharacters[characters]["Main Name"] = character_name                    
                         
                         if not debugMode:
+                            updateCursor = sq1Database.cursor(buffered=True)
                             updateStatement = ("UPDATE invite SET slack_id=%s, account_status=%s WHERE email=%s")
                             updateCursor.execute(updateStatement, (slackCharacters[characters]["ID"],slackCharacters[characters]["Account Status"],slackCharacters[characters]["Email"]))
                             sq1Database.commit()
                             
+                            updateCursor.close()
+                            
                         newlyLinkedAccounts += 1
                         
                         duplicateRowTimestamps.append(invited_at)
-                    
+                
+                secondaryCheckCursor.close()
+                
                 if not emailCheckExists and slackCharacters[characters]["Account Status"] != "Terminated":
                     slackCharacters[characters]["To Remove"] = True
                     slackCharacters[characters]["Reason"] = "No Matching Email"
@@ -243,15 +313,16 @@ def checkCharacters():
         #################################
         
         if not debugMode:
+            checkCursor = sq1Database.cursor(buffered=True)
             checkQuery = ("SELECT * FROM invite")
             checkCursor.execute(checkQuery)
             
             for (character_id, character_name, slack_email, email_history, invited_at, account_slack_id, account_status) in checkCursor:
                 if account_slack_id == None or account_slack_id == "" or account_slack_id == "NULL":
                     orphanedInvites += 1
-        else:
-            orphanedInvites = "Unknown"
-        
+                    
+            checkCursor.close()
+
         timeChecks["Time to Fetch Orphaned Invites"] = time.perf_counter() - sum(listOfTimes)
         listOfTimes.append(timeChecks["Time to Fetch Orphaned Invites"])
         
@@ -296,6 +367,9 @@ def checkCharacters():
                     else:
                         print("An error occured while checking the character " + str(slackCharacters[characters]["Main Character ID"]) + "... Trying again in a sec.")
                         time.sleep(1)
+
+                # reduces CPU usage of Core server
+                time.sleep(0.5)
         
         timeChecks["Time to Check Accounts Against Core"] = time.perf_counter() - sum(listOfTimes)
         listOfTimes.append(timeChecks["Time to Check Accounts Against Core"])        
@@ -313,21 +387,30 @@ def checkCharacters():
                         try:
                             slackBot.chat_postMessage(channel=slackInfo["NotificationChannel"], text=toPostToAdmins, link_names="true")
                             
-                            dmChannel = slackBot.im_open(user=slackCharacters[characters]["ID"])
-                            if dmChannel["ok"]:
+                            try:
+                                dmChannel = slackBot.im_open(user=slackCharacters[characters]["ID"])
+                                dmIsGood = True
+                            except:
+                                dmIsGood = False
+                                
+                            if dmIsGood:
                                 toPostToUser = removalNotification.format(user_id=slackCharacters[characters]["ID"])
+                                
+                                if slackCharacters[characters]["Reason"] == "No Matching Email":
+                                    toPostToUser += emailNotification
+                                
                                 slackBot.chat_postMessage(channel=dmChannel["channel"]["id"], text=toPostToUser, link_names="true")
                                 
                             break
                         except:
                             print("Failed to send slack message. Trying again in a sec.")
                             time.sleep(1)
-        else:
-            with open("removedCharacters.txt", "w") as removalFile:
-                for characters in slackCharacters:
-                    if slackCharacters[characters]["To Remove"] and slackCharacters[characters]["Account Status"] != "Terminated":
-                        removalFile.write(slackCharacters[characters]["Display Name"] + " (" + slackCharacters[characters]["ID"] + ") - " + slackCharacters[characters]["Reason"] + "\n")
-        
+
+        with open("removedCharacters.txt", "w") as removalFile:
+            for characters in slackCharacters:
+                if slackCharacters[characters]["To Remove"] and slackCharacters[characters]["Account Status"] != "Terminated":
+                    removalFile.write(slackCharacters[characters]["Display Name"] + " (" + slackCharacters[characters]["ID"] + ") - " + slackCharacters[characters]["Reason"] + "\n")
+
         timeChecks["Time To Send Messages"] = time.perf_counter() - sum(listOfTimes)
         listOfTimes.append(timeChecks["Time To Send Messages"])
         
