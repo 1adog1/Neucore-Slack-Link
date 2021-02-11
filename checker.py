@@ -388,7 +388,7 @@ def checkCharacters():
                             slackBot.chat_postMessage(channel=slackInfo["NotificationChannel"], text=toPostToAdmins, link_names="true")
                             
                             try:
-                                dmChannel = slackBot.im_open(user=slackCharacters[characters]["ID"])
+                                dmChannel = slackBot.conversations_open(users=slackCharacters[characters]["ID"])
                                 dmIsGood = True
                             except:
                                 dmIsGood = False
