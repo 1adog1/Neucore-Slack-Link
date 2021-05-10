@@ -79,9 +79,6 @@ if Path(dataFile(configPathOverride, "/config") + "/config.ini").is_file():
     if os.environ.get("SLACKCORE_NOTIFICATION_CHANNEL") != None:
         slackInfo["NotificationChannel"] = os.environ.get("SLACKCORE_NOTIFICATION_CHANNEL")
     
-    if os.environ.get("SLACKCORE_APP_TOKEN") != None:
-        slackInfo["AppToken"] = os.environ.get("SLACKCORE_APP_TOKEN")
-    
     if os.environ.get("SLACKCORE_BOT_TOKEN") != None:
         slackInfo["BotToken"] = os.environ.get("SLACKCORE_BOT_TOKEN")
         
@@ -135,7 +132,6 @@ def checkCharacters():
         removedAccounts = 0
         reactivatedAccounts = 0
         
-        slackApp = SlackClient.WebClient(slackInfo["AppToken"])
         slackBot = SlackClient.WebClient(slackInfo["BotToken"])
         
         sq1Database = DatabaseConnector.connect(user=databaseInfo["DatabaseUsername"], password=databaseInfo["DatabasePassword"], host=databaseInfo["DatabaseServer"] , port=int(databaseInfo["DatabasePort"]), database=databaseInfo["DatabaseName"])
@@ -153,9 +149,9 @@ def checkCharacters():
             while True:
                 try:
                     if nextPage != "First":
-                        thisPage = slackApp.users_list(cursor=str(nextPage),limit=500)
+                        thisPage = slackBot.users_list(cursor=str(nextPage),limit=500)
                     else:
-                        thisPage = slackApp.users_list(limit=500)
+                        thisPage = slackBot.users_list(limit=500)
                     break
                 except:
                     print("Failed to get the user list. Trying again in a sec.")
