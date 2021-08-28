@@ -172,7 +172,7 @@ class User:
     
     def updateProfile(self, debug_mode, use_email = False):
     
-        if not debug_mode:
+        if not debug_mode and self.character_id is not None:
         
             database_cursor = self.database_connection.cursor(buffered=True)
         
