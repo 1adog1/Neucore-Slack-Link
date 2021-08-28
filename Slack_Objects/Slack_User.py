@@ -35,12 +35,12 @@ class User:
     
         if use_email:
             
-            query_statement = "SELECT * FROM invite WHERE email=%s LIMIT 1"
+            query_statement = "SELECT * FROM invite WHERE email=%s ORDER BY invited_at DESC LIMIT 1"
             database_cursor.execute(query_statement, (self.email,))
         
         else:
             
-            query_statement = "SELECT * FROM invite WHERE slack_id=%s LIMIT 1"
+            query_statement = "SELECT * FROM invite WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
             database_cursor.execute(query_statement, (self.id,))
         
         for db_character_id, db_character_name, db_email, db_email_history, db_invited_at, db_slack_id, db_account_status in database_cursor:
