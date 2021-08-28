@@ -178,12 +178,12 @@ class User:
         
             if use_email:
             
-                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, slack_id=%s, account_status=%s WHERE email=%s"
+                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, slack_id=%s, account_status=%s WHERE email=%s ORDER BY invited_at DESC LIMIT 1"
                 database_cursor.execute(update_statement, (self.character_id, self.character_name, self.id, self.status, self.email))
             
             else:
             
-                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, email=%s, account_status=%s WHERE slack_id=%s"
+                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, email=%s, account_status=%s WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
                 database_cursor.execute(update_statement, (self.character_id, self.character_name, self.email, self.status, self.id))
             
             self.database_connection.commit()
