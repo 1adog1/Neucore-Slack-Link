@@ -85,6 +85,8 @@ class User:
                     
                     print("Error (" + str(core_request.status_code) + ") while trying to pull core roles for " + str(self.character_name) + " (" + str(self.character_id) + ")... Trying again in a sec.")
                     time.sleep(1)
+                    
+            time.sleep(0.5)
     
     
     def updateStatus(self, allowed_groups, name_enforcement):

@@ -195,8 +195,6 @@ def startChecks():
                 core_url = coreInfo["core_url"],
                 core_auth_header = core_auth
             )
-            
-            time.sleep(0.5)
         
         time_checkpoints["Time to Fetch Core Accounts"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Fetch Core Accounts"])
