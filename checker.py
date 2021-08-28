@@ -221,7 +221,7 @@ def startChecks():
             if accounts[account].previous_status == "Terminated" and accounts[account].status != "Terminated":
                 status_breakdown["Account Reactivated"] += 1
                 
-            if accounts[account].status == "Terminated" and accounts[account].previous_status != "Terminated":
+            if accounts[account].status == "Terminated" and accounts[account].previous_status is not None and accounts[account].previous_status != "Terminated":
                 status_breakdown["Account Deactivated"] += 1
         
         time_checkpoints["Time to Update Statuses"] = time.perf_counter() - sum(sum_times)
