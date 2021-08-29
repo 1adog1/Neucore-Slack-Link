@@ -37,8 +37,9 @@ def dataFile(pathOverride, extraFolder = ""):
     else:
         return(pathOverride)
 
-
-#INITIAL SETUP
+###################
+#  INITIAL SETUP  #
+###################
 if Path(dataFile(configPathOverride, "/config") + "/config.ini").is_file():
     config_data = configparser.ConfigParser()
     config_data.read(dataFile(configPathOverride, "/config") + "/config.ini")
@@ -49,7 +50,9 @@ if Path(dataFile(configPathOverride, "/config") + "/config.ini").is_file():
         
         config[section] = dict(config_data[section])
     
-    #ENVIRONMENTAL OVERRIDES
+    #############################
+    #  ENVIRONMENTAL OVERRIDES  #
+    #############################
     booleanInterpreters = {"yes": True, "true": True, 1: True, "1": True, "no": False, "false": False, 0: False, "0": False}
     
     environmental_variables = {
@@ -94,7 +97,9 @@ else:
     raise Warning("No Configuration File Found!")
 
 
-#CHECKER
+#############
+#  CHECKER  #
+#############
 def startChecks():
     
     try:
@@ -109,6 +114,7 @@ def startChecks():
         status_breakdown = {
             "Account Linked": 0, 
             "Email Changed": 0, 
+            "Name Changed": 0, 
             "Account Reactivated": 0, 
             "Account Deactivated": 0
         }
@@ -134,7 +140,10 @@ def startChecks():
         startTime = time.perf_counter()
         sum_times.append(startTime)
         
-        #FETCH SLACK ACCOUNTS
+        
+        ##########################
+        #  FETCH SLACK ACCOUNTS  #
+        ##########################
         next_page = None
         while next_page != False:
             
@@ -173,7 +182,10 @@ def startChecks():
         time_checkpoints["Time to Fetch Slack Accounts"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Fetch Slack Accounts"])
         
-        #FETCH DATABASE PROFILES
+        
+        #############################
+        #  FETCH DATABASE PROFILES  #
+        #############################
         for account in accounts:
         
             accounts[account].buildProfile()
@@ -185,7 +197,10 @@ def startChecks():
         time_checkpoints["Time to Fetch Database Entries"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Fetch Database Entries"])
         
-        #FETCH CORE ACCOUNTS
+        
+        #########################
+        #  FETCH CORE ACCOUNTS  #
+        #########################
         core_raw_auth = str(coreInfo["app_id"]) + ":" + coreInfo["app_secret"]
         core_auth = "Bearer " + base64.urlsafe_b64encode(core_raw_auth.encode("utf-8")).decode()
         
@@ -199,7 +214,10 @@ def startChecks():
         time_checkpoints["Time to Fetch Core Accounts"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Fetch Core Accounts"])
         
-        #UPDATE ACCOUNT STATUSES
+        
+        #############################
+        #  UPDATE ACCOUNT STATUSES  #
+        #############################
         for account in accounts:
         
             accounts[account].updateStatus(
@@ -218,6 +236,9 @@ def startChecks():
             if accounts[account].email != accounts[account].linked_email and accounts[account].linked_email is not None:
                 status_breakdown["Email Changed"] += 1
                 
+            if accounts[account].name != accounts[account].previous_name and accounts[account].previous_name is not None:
+                status_breakdown["Name Changed"] += 1
+                
             if accounts[account].previous_status == "Terminated" and accounts[account].status != "Terminated":
                 status_breakdown["Account Reactivated"] += 1
                 
@@ -227,7 +248,10 @@ def startChecks():
         time_checkpoints["Time to Update Statuses"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Update Statuses"])
         
-        #SEND NOTIFICATIONS
+        
+        ########################
+        #  SEND NOTIFICATIONS  #
+        ########################
         for account in accounts:
         
             if accounts[account].status == "Pending Removal":
@@ -274,7 +298,10 @@ def startChecks():
         time_checkpoints["Time to Send Notifications"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Send Notifications"])
         
-        #UPDATE DATABASE
+        
+        #####################
+        #  UPDATE DATABASE  #
+        #####################
         for account in accounts:
             
             accounts[account].updateProfile(
@@ -287,8 +314,10 @@ def startChecks():
         time_checkpoints["Time to Update Database"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Update Database"])
         
-        #STATUS PRINTING
         
+        #####################
+        #  STATUS PRINTING  #
+        #####################
         with open(dataFile(configPathOverride) + "/removedCharacters.txt", "w") as removal_file:
             
             for account in accounts:

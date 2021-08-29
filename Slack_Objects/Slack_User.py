@@ -19,6 +19,7 @@ class User:
         
         self.status = slack_status
         self.previous_status = None
+        self.previous_name = None
         
         self.alert_reason = None
         
@@ -43,13 +44,14 @@ class User:
             query_statement = "SELECT * FROM invite WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
             database_cursor.execute(query_statement, (self.id,))
         
-        for db_character_id, db_character_name, db_email, db_email_history, db_invited_at, db_slack_id, db_account_status in database_cursor:
+        for db_character_id, db_character_name, db_email, db_email_history, db_invited_at, db_slack_id, db_account_status, db_slack_name in database_cursor:
             
             self.account_linked = True if (not use_email) else False
             
             self.character_id = db_character_id
             self.character_name = db_character_name
             self.previous_status = db_account_status
+            self.previous_name = db_slack_name
             self.linked_email = db_email
         
         database_cursor.close()
@@ -180,13 +182,13 @@ class User:
         
             if use_email:
             
-                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, slack_id=%s, account_status=%s WHERE email=%s ORDER BY invited_at DESC LIMIT 1"
-                database_cursor.execute(update_statement, (self.character_id, self.character_name, self.id, self.status, self.email))
+                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, slack_id=%s, slack_name=%s, account_status=%s WHERE email=%s ORDER BY invited_at DESC LIMIT 1"
+                database_cursor.execute(update_statement, (self.character_id, self.character_name, self.id, self.name, self.status, self.email))
             
             else:
             
-                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, email=%s, account_status=%s WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
-                database_cursor.execute(update_statement, (self.character_id, self.character_name, self.email, self.status, self.id))
+                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, email=%s, slack_name=%s, account_status=%s WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
+                database_cursor.execute(update_statement, (self.character_id, self.character_name, self.email, self.name, self.status, self.id))
             
             self.database_connection.commit()
             database_cursor.close()
