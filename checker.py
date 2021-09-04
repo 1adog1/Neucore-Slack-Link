@@ -1,8 +1,10 @@
 import time
+import sys
 import base64
 import traceback
 import configparser
 
+from datetime import datetime
 from pathlib import Path
 from os import environ
 
@@ -36,6 +38,8 @@ def dataFile(pathOverride, extraFolder = ""):
     
     else:
         return(pathOverride)
+
+print("[" + str(datetime.now()) + "] Doing initial setup...")
 
 ###################
 #  INITIAL SETUP  #
@@ -141,6 +145,8 @@ def startChecks():
         sum_times.append(startTime)
         
         
+        print("[" + str(datetime.now()) + "] Fetching Slack Accounts...")
+        
         ##########################
         #  FETCH SLACK ACCOUNTS  #
         ##########################
@@ -174,14 +180,17 @@ def startChecks():
                 
             except:
                 
-                print("Failed to get the user list... Trying again in a sec.")
-                time.sleep(1)
+                print("\n" + str(sys.exc_info()[1]))
+                print("Failed to get the user list at cursor " + str(next_page) + "... Trying again in a few seconds.")
+                time.sleep(5)
             
             time.sleep(0.5)
         
         time_checkpoints["Time to Fetch Slack Accounts"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Fetch Slack Accounts"])
         
+        
+        print("[" + str(datetime.now()) + "] Fetching Profiles From Database...")
         
         #############################
         #  FETCH DATABASE PROFILES  #
@@ -197,6 +206,8 @@ def startChecks():
         time_checkpoints["Time to Fetch Database Entries"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Fetch Database Entries"])
         
+        
+        print("[" + str(datetime.now()) + "] Fetching Core Accounts...")
         
         #########################
         #  FETCH CORE ACCOUNTS  #
@@ -214,6 +225,8 @@ def startChecks():
         time_checkpoints["Time to Fetch Core Accounts"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Fetch Core Accounts"])
         
+        
+        print("[" + str(datetime.now()) + "] Updating Account Statuses...")
         
         #############################
         #  UPDATE ACCOUNT STATUSES  #
@@ -248,6 +261,8 @@ def startChecks():
         time_checkpoints["Time to Update Statuses"] = time.perf_counter() - sum(sum_times)
         sum_times.append(time_checkpoints["Time to Update Statuses"])
         
+        
+        print("[" + str(datetime.now()) + "] Sending Notifications...")
         
         ########################
         #  SEND NOTIFICATIONS  #
@@ -299,6 +314,8 @@ def startChecks():
         sum_times.append(time_checkpoints["Time to Send Notifications"])
         
         
+        print("[" + str(datetime.now()) + "] Updating Database Profiles...")
+        
         #####################
         #  UPDATE DATABASE  #
         #####################
@@ -326,9 +343,9 @@ def startChecks():
                     removal_file.write(accounts[account].name + " (" + accounts[account].id + ") - " + accounts[account].alert_reason + "\n")
         
         if debugMode:
-            print("DEBUG MODE ENABLED - No changes have been made to the database, and no Slack messages have been sent.\n")
+            print("\nDEBUG MODE ENABLED - No changes have been made to the database, and no Slack messages have been sent.\n")
         
-        print("TIME CHECKS\n-----------")
+        print("\nTIME CHECKS\n-----------")
         for each_checkpoint in time_checkpoints:
             print(each_checkpoint + ": " + str(time_checkpoints[each_checkpoint]) + " Seconds.")
             
