@@ -9,7 +9,7 @@ from pathlib import Path
 from os import environ
 
 import mysql.connector as DatabaseConnector
-import slack as SlackClient
+from slack_sdk import WebClient
 
 from Slack_Objects import User
 from Slack_Objects import Message_Templates
@@ -131,7 +131,7 @@ def startChecks():
         sum_times = []
         time_checkpoints = {}
         
-        slack_bot = SlackClient.WebClient(slackInfo["bot_token"])
+        slack_bot = WebClient(token=slackInfo["bot_token"])
         
         database_connection = DatabaseConnector.connect(
             user=databaseInfo["database_username"], 

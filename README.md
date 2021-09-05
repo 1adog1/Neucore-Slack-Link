@@ -7,7 +7,7 @@ Neucore-Slack-Link is a proprietary bot used to kick people from Slack who shoul
 * Python ≥ 3.7
   * [requests](https://pypi.org/project/requests/)
   * [Python MySQL Connector](https://dev.mysql.com/downloads/connector/python/)
-  * [slackclient](https://github.com/slackapi/python-slackclient)
+  * [slack_sdk](https://github.com/slackapi/python-slack-sdk)
 * An SQL Server
   * If you are using MySQL, the Authentication Method **MUST** be the Legacy Version. PDO does not support the use of `caching_sha2_password` Authentication. 
 * A Slack Workspace
@@ -38,7 +38,7 @@ $ virtualenv -p python3 .venv
 $ source .venv/bin/activate
 $ pip install requests
 $ pip install mysql-connector-python
-$ pip install slackclient
+$ pip install slack_sdk
 $ deactivate
 
 # run
