@@ -153,36 +153,40 @@ def startChecks():
         next_page = None
         while next_page != False:
             
-            try:
+            while True:
             
-                if next_page is not None:
-                    this_page = slack_bot.users_list(cursor=next_page, limit=500)
-                else:
-                    this_page = slack_bot.users_list(limit=500)
+                try:
                 
-                for account in this_page["members"]:
-                    
-                    if (
-                        not ("is_bot" in account and account["is_bot"]) and
-                        account["id"] != "USLACKBOT"
-                    ):
+                    if next_page is not None:
+                        this_page = slack_bot.users_list(cursor=next_page, limit=500)
+                    else:
+                        this_page = slack_bot.users_list(limit=500)
                         
-                        accounts[account["id"]] = User(
-                            database_connection = database_connection, 
-                            slack_id = account["id"], 
-                            slack_username = account["name"], 
-                            slack_name = account["profile"]["real_name"], 
-                            slack_email = account["profile"]["email"], 
-                            slack_status = "Terminated" if ("deleted" in account and account["deleted"]) else "Active"
-                        )
+                    break
+                    
+                except:
+                    
+                    print("\n" + str(sys.exc_info()[1]))
+                    print("Failed to get the user list at cursor " + str(next_page) + "... Trying again in a few seconds.")
+                    time.sleep(5)
                 
-                next_page = this_page["response_metadata"]["next_cursor"] if ("next_cursor" in this_page["response_metadata"] and this_page["response_metadata"]["next_cursor"] != "") else False
+            for account in this_page["members"]:
                 
-            except:
-                
-                print("\n" + str(sys.exc_info()[1]))
-                print("Failed to get the user list at cursor " + str(next_page) + "... Trying again in a few seconds.")
-                time.sleep(5)
+                if (
+                    not ("is_bot" in account and account["is_bot"]) and
+                    account["id"] != "USLACKBOT"
+                ):
+                    
+                    accounts[account["id"]] = User(
+                        database_connection = database_connection, 
+                        slack_id = account["id"], 
+                        slack_username = account["name"], 
+                        slack_name = account["profile"]["real_name"], 
+                        slack_email = account["profile"]["email"], 
+                        slack_status = "Terminated" if ("deleted" in account and account["deleted"]) else "Active"
+                    )
+            
+            next_page = this_page["response_metadata"]["next_cursor"] if ("next_cursor" in this_page["response_metadata"] and this_page["response_metadata"]["next_cursor"] != "") else False
             
             time.sleep(0.5)
         
