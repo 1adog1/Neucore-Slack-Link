@@ -88,6 +88,7 @@ if Path(dataFile(configPathOverride, "/config") + "/config.ini").is_file():
         }, 
         "Slack": {
             "notification_channel": "SLACKCORE_NOTIFICATION_CHANNEL", 
+            "name_alert_channel": "SLACKCORE_NAME_ALERT_CHANNEL", 
             "bot_token": "SLACKCORE_BOT_TOKEN", 
             "allowed_groups": "SLACKCORE_ALLOWED_GROUPS", 
             "name_enforcement": "SLACKCORE_NAME_ENFORCEMENT", 
@@ -309,7 +310,7 @@ def startChecks():
                 
                 accounts[account].sendAdminMessage(
                     slack_handler = slack_bot, 
-                    admin_channel = slackInfo["notification_channel"], 
+                    admin_channel = (slackInfo["name_alert_channel"] if (accounts[account].alert_reason == "Failed Naming Standards") else slackInfo["notification_channel"]), 
                     incoming_message = admin_message, 
                     debug_mode = debugMode
                 )
