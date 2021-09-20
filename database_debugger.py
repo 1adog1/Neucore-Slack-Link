@@ -315,7 +315,7 @@ def startChecks():
         
         while True:
             
-            print("\n" + str(len(all_dead_invites)) + " Dead Invites exist. " + str(associated_invite_statuses["Total"]) + " are associated with a Slack Account (" + str(associated_invite_statuses["Active"]) + " Active / " + str(associated_invite_statuses["Terminated"]) + " Terminated), and " + str(len(unassociated_dead_invites)) + " are assigned to non-existent Slack Accounts. If deleted, " + str(len(unique_dead_invites)) + " Slack Accounts will be left without valid invites. You can review all dead invites in 'removable_invites.txt'.\n")
+            print("\n" + str(len(all_dead_invites)) + " Dead Invites exist. " + str(associated_invite_statuses["Total"]) + " are associated with a Slack Account (" + str(associated_invite_statuses["Active"]) + " Active / " + str(associated_invite_statuses["Terminated"]) + " Terminated), and " + str(len(unassociated_dead_invites)) + " are assigned to non-existent Slack Accounts. If deleted, " + str(len(unique_dead_invites)) + " Slack Accounts will be left without valid invites. You can review all dead invites in 'removable_invites.txt'.")
             
             if len(unique_dead_invites) != 0:
                 
@@ -325,13 +325,13 @@ def startChecks():
                     
                     print("\t" + each_invite["Slack Name"] + " (" + each_invite["Slack ID"] + ") - " + each_invite["Slack Status"])
                     
-                print("\nWARNING! This action will leave the above " + str(len(unique_dead_invites)) + " Slack Accounts without valid invites! This could indicate a major issue with the database or checker script!\n")
+                print("\nWARNING! This action will leave the above " + str(len(unique_dead_invites)) + " Slack Accounts without valid invites! This could indicate a major issue with the database or checker script!")
             
-            delete_dead_invites = input("Delete Dead Invites? (Y/N): ")
+            delete_dead_invites = input("\nDelete Dead Invites? (Y/N): ")
             
             action_delete_dead_invites = (delete_dead_invites.lower() == "y")
             
-            print("\nSelected Change: \n\nDelete Dead Invites: " + str(action_delete_dead_invites) + " \n")
+            print("\nSelected Change: \nDelete Dead Invites: " + str(action_delete_dead_invites) + " \n")
             
             confirmation = input("Confirm this selection? (Y/N): ")
             
@@ -408,7 +408,7 @@ def startChecks():
         
         while True:
             
-            print("\n" + str(statuses["Total Failing"]["Total"]) + " Slack Accounts are failing loose naming standards, of which " + str(statuses["Total Failing"]["Active"]) + " are Active.\n")
+            print("\n" + str(statuses["Total Failing"]["Total"]) + " Slack Accounts are failing loose naming standards, of which " + str(statuses["Total Failing"]["Active"]) + " are Active.")
             
             print(str(statuses["No Change"]["Total"]) + " Slack Accounts (" + str(statuses["No Change"]["Active"]) + " Active / " + str(statuses["No Change"]["Terminated"]) + " Terminated) cannot be re-linked to satisfy the loose naming standard. You can review these accounts in 'cannot_relink.txt'.\n")
             
@@ -424,7 +424,7 @@ def startChecks():
             
             action_update_to_other = (update_to_other.lower() == "y")
             
-            print("\nSelected Changes: \n\nRe-Link Relevant Accounts To Mains: " + str(action_update_to_main) + " \nRe-Link Relevant Accounts to Other Valid Characters: " + str(action_update_to_other) + " \n")
+            print("\nSelected Changes: \nRe-Link Relevant Accounts To Mains: " + str(action_update_to_main) + " \nRe-Link Relevant Accounts to Other Valid Characters: " + str(action_update_to_other) + " \n")
             
             confirmation = input("Confirm these selections? (Y/N): ")
             
@@ -444,12 +444,12 @@ def startChecks():
             
             for account in accounts:
                 
-                if accounts[account].link_to_main:
+                if action_update_to_main and accounts[account].link_to_main:
                     
                     accounts[account].character_id = accounts[account].main_id
                     accounts[account].character_name = accounts[account].main_name
                 
-                elif accounts[account].link_to_other:
+                elif action_update_to_other and accounts[account].link_to_other:
                     
                     accounts[account].character_id = accounts[account].other_id
                     accounts[account].character_name = accounts[account].other_name
