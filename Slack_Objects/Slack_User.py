@@ -151,6 +151,8 @@ class User:
                 except:
                     print("Failed to send user message to " + str(self.name) + " (" + str(self.id) + ")... Trying again in a sec.")
                     time.sleep(1)
+                    
+            time.sleep(1)
     
     
     def sendAdminMessage(self, slack_handler, admin_channel, incoming_message, debug_mode):
@@ -172,6 +174,8 @@ class User:
                 except:
                     print("Failed to send admin message for " + str(self.name) + " (" + str(self.id) + ")... Trying again in a sec.")
                     time.sleep(1)
+                    
+            time.sleep(1)
     
     
     def updateProfile(self, debug_mode, use_email = False):
