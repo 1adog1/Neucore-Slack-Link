@@ -290,9 +290,19 @@ def startChecks():
         
             if accounts[account].status == "Pending Removal":
                 
-                user_message = Message_Templates.removal_user_message.format(
-                    user_id = accounts[account].id
-                )
+                if accounts[account].alert_reason == "Failed Naming Standards":
+                    
+                    user_message = Message_Templates.name_failure_user_message.format(
+                        user_id = accounts[account].id, 
+                        character_name = accounts[account].character_name, 
+                        naming_policy = Message_Templates.naming_policies[slackInfo["name_enforcement"]]
+                    )
+                    
+                else:
+                    
+                    user_message = Message_Templates.removal_user_message.format(
+                        user_id = accounts[account].id
+                    )
                 
                 admin_message = Message_Templates.removal_admin_message.format(
                     user_id = accounts[account].id, 
@@ -379,6 +389,8 @@ def startChecks():
         print("\nALERT BREAKDOWN\n----------------")
         for each_status in alert_breakdown:
             print(each_status + ": " + str(alert_breakdown[each_status]))
+            
+        print("\n")
     
     except:
         
