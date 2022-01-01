@@ -21,7 +21,7 @@ The Slack Account <@{user_id}> Needs to Be Removed.
 ```
 Name: {display_name}
 Username: {username}
-Main Character: {main_name}
+Linked Character: {main_name}
 Reason For Removal: {reason}
 ```
 """
