@@ -249,10 +249,11 @@ def startChecks():
         
         database_cursor = database_connection.cursor(buffered=True)
     
-        query_statement = "SELECT * FROM invite WHERE slack_id IS NOT NULL AND slack_name IS NULL ORDER BY invited_at"
+        query_statement = "SELECT character_id, character_name, slack_id FROM invite " \
+                          "WHERE slack_id IS NOT NULL AND slack_name IS NULL ORDER BY invited_at"
         database_cursor.execute(query_statement)
         
-        for db_character_id, db_character_name, db_email, db_email_history, db_invited_at, db_slack_id, db_account_status, db_slack_name in database_cursor:
+        for db_character_id, db_character_name, db_slack_id in database_cursor:
             
             all_dead_invites.append({
                 "Character ID": int(db_character_id), 

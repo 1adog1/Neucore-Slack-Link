@@ -45,15 +45,17 @@ class DebugUser:
     
         if use_email:
             
-            query_statement = "SELECT * FROM invite WHERE email=%s ORDER BY invited_at DESC LIMIT 1"
+            query_statement = "SELECT character_id, character_name, email, slack_id, slack_name " \
+                              "FROM invite WHERE email=%s ORDER BY invited_at DESC LIMIT 1"
             database_cursor.execute(query_statement, (self.email,))
         
         else:
             
-            query_statement = "SELECT * FROM invite WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
+            query_statement = "SELECT character_id, character_name, email, slack_id, slack_name " \
+                              "FROM invite WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
             database_cursor.execute(query_statement, (self.id,))
         
-        for db_character_id, db_character_name, db_email, db_email_history, db_invited_at, db_slack_id, db_account_status, db_slack_name in database_cursor:
+        for db_character_id, db_character_name, db_email, db_slack_id, db_slack_name in database_cursor:
             
             self.account_linked = True if (not use_email) else False
             
@@ -69,10 +71,11 @@ class DebugUser:
     
         database_cursor = self.database_connection.cursor(buffered=True)
     
-        query_statement = "SELECT * FROM invite WHERE slack_id=%s AND slack_name IS NULL ORDER BY invited_at"
+        query_statement = "SELECT character_id, character_name FROM invite " \
+                          "WHERE slack_id=%s AND slack_name IS NULL ORDER BY invited_at"
         database_cursor.execute(query_statement, (self.id,))
         
-        for db_character_id, db_character_name, db_email, db_email_history, db_invited_at, db_slack_id, db_account_status, db_slack_name in database_cursor:
+        for db_character_id, db_character_name in database_cursor:
             
             self.dead_invites.append({
                 "Character ID": db_character_id, 
@@ -132,12 +135,12 @@ class DebugUser:
     
         database_cursor = self.database_connection.cursor(buffered=True)
     
-        query_statement = "SELECT * FROM invite WHERE character_id=%s"
+        query_statement = "SELECT character_id FROM invite WHERE character_id=%s"
         database_cursor.execute(query_statement, (check_character_id,))
         
         has_invite = False
         
-        for db_character_id, db_character_name, db_email, db_email_history, db_invited_at, db_slack_id, db_account_status, db_slack_name in database_cursor:
+        for db_character_id in database_cursor:
             
             has_invite = True
         
