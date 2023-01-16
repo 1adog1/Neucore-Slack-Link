@@ -4,20 +4,6 @@ import base64
 import traceback
 import configparser
 
-#Should be unused but testing these anyway
-##########################################
-import json
-import inspect
-import os
-import requests
-import slack_sdk
-import slack
-
-from datetime import timezone
-
-import slack as SlackClient
-##########################################
-
 from datetime import datetime
 from pathlib import Path
 from os import environ
@@ -198,7 +184,8 @@ def startChecks():
                         slack_username = account["name"], 
                         slack_name = account["profile"]["real_name"], 
                         slack_email = account["profile"]["email"], 
-                        slack_status = "Terminated" if ("deleted" in account and account["deleted"]) else "Active"
+                        slack_status = "Terminated" if ("deleted" in account and account["deleted"]) else "Active",
+                        slack_invite_pending = ("is_invited_user" in account and account["is_invited_user"])
                     )
             
             next_page = this_page["response_metadata"]["next_cursor"] if ("next_cursor" in this_page["response_metadata"] and this_page["response_metadata"]["next_cursor"] != "") else False

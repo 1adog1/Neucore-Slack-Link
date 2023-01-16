@@ -6,7 +6,7 @@ import mysql.connector as DatabaseConnector
 
 class User:
 
-    def __init__(self, database_connection, slack_id, slack_username, slack_name, slack_email, slack_status):
+    def __init__(self, database_connection, slack_id, slack_username, slack_name, slack_email, slack_status, slack_invite_pending):
     
         self.database_connection = database_connection
         
@@ -16,6 +16,7 @@ class User:
         self.email = slack_email
         
         self.account_linked = False
+        self.invite_pending = slack_invite_pending
         
         self.status = slack_status
         self.previous_status = None
@@ -112,13 +113,16 @@ class User:
                 self.alert_reason = "Newly Invited"
             
             elif (
+                not self.invite_pending and 
                 (
-                    name_enforcement == "loose" and 
-                    not all(part in self.name.lower() for part in self.character_name.lower().split(" "))
-                ) or
-                (
-                    name_enforcement == "strict" and 
-                    self.name != self.character_name
+                    (
+                        name_enforcement == "loose" and 
+                        not all(part in self.name.lower() for part in self.character_name.lower().split(" "))
+                    ) or
+                    (
+                        name_enforcement == "strict" and 
+                        self.name != self.character_name
+                    )
                 )
             ):
             
