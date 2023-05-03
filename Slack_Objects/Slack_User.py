@@ -1,8 +1,4 @@
-import requests
 import time
-import json
-
-import mysql.connector as DatabaseConnector
 
 class User:
 
@@ -23,11 +19,14 @@ class User:
         self.previous_name = None
         
         self.alert_reason = None
+        self.relink = False
+        self.cannot_relink = False
         
         self.core_roles = []
         
         self.character_id = None
         self.character_name = None
+        self.enforced_name = None
         self.linked_email = None
     
     
@@ -53,48 +52,15 @@ class User:
             
             self.character_id = db_character_id
             self.character_name = db_character_name
+            self.enforced_name = db_character_name
             self.previous_status = db_account_status
             self.previous_name = db_slack_name
             self.linked_email = db_email
         
         database_cursor.close()
     
-    
-    def getCoreData(self, core_url, core_auth_header):
-        
-        if self.character_id != None and self.status != "Terminated":
-        
-            core_header = {"Authorization" : core_auth_header}
-            
-            core_endpoint = "api/app/v2/groups/"
-            request_url = core_url + core_endpoint + str(self.character_id)
-            
-            while True:
-                core_request = requests.get(request_url, headers = core_header)
-                
-                if core_request.status_code == requests.codes.ok:
-                
-                    request_data = json.loads(core_request.text)
-                    
-                    for eachRole in request_data:
-                    
-                        self.core_roles.append(eachRole["name"])
-                
-                    break
-                
-                elif core_request.status_code == 404:
-                    
-                    break
-                
-                else:
-                    
-                    print("Error (" + str(core_request.status_code) + ") while trying to pull core roles for " + str(self.character_name) + " (" + str(self.character_id) + ")... Trying again in a sec.")
-                    time.sleep(1)
-                    
-            time.sleep(0.5)
-    
-    
-    def updateStatus(self, allowed_groups, name_enforcement):
+
+    def updateStatus(self, allowed_groups, name_enforcement, enforcement_active):
     
         if self.status != "Terminated":
             
@@ -107,21 +73,31 @@ class User:
                 
                 self.status = "Pending Removal"
                 self.alert_reason = "Not Authorized"
+
+            elif self.cannot_relink:
+
+                self.status = "Pending Removal"
+                self.alert_reason = "Cannot Be Relinked"
             
             elif not self.account_linked:
             
                 self.alert_reason = "Newly Invited"
+
+            elif self.relink:
+                
+                self.alert_reason = "Character Relinked"
             
             elif (
                 not self.invite_pending and 
+                enforcement_active and
                 (
                     (
                         name_enforcement == "loose" and 
-                        not all(part in self.name.lower() for part in self.character_name.lower().split(" "))
+                        not all(part in self.name.lower() for part in self.enforced_name.lower().split(" "))
                     ) or
                     (
                         name_enforcement == "strict" and 
-                        self.name != self.character_name
+                        self.name != self.enforced_name
                     )
                 )
             ):
@@ -192,13 +168,13 @@ class User:
         
             if use_email:
             
-                update_statement = "UPDATE invite SET slack_id=%s, slack_name=%s, account_status=%s WHERE email=%s ORDER BY invited_at DESC LIMIT 1"
-                database_cursor.execute(update_statement, (self.id, self.name, self.status, self.email))
+                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, slack_id=%s, slack_name=%s, account_status=%s WHERE email=%s ORDER BY invited_at DESC LIMIT 1"
+                database_cursor.execute(update_statement, (self.character_id, self.character_name, self.id, self.name, self.status, self.email))
             
             else:
             
-                update_statement = "UPDATE invite SET email=%s, slack_name=%s, account_status=%s WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
-                database_cursor.execute(update_statement, (self.email, self.name, self.status, self.id))
+                update_statement = "UPDATE invite SET character_id=%s, character_name=%s, email=%s, slack_name=%s, account_status=%s WHERE slack_id=%s ORDER BY invited_at DESC LIMIT 1"
+                database_cursor.execute(update_statement, (self.character_id, self.character_name, self.email, self.name, self.status, self.id))
             
             self.database_connection.commit()
             database_cursor.close()
