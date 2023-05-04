@@ -268,41 +268,55 @@ def startChecks():
         #################################
         
         characters_to_check = [account_data.character_id for id, account_data in accounts.items() if (account_data.character_id is not None and account_data.status != "Terminated")]
+        chunked_characters_to_check = [characters_to_check[x:x+500] for x in range(0, len(characters_to_check), 500)]
         already_relinked = []
 
         characters_call = coreInfo["core_url"] + "api/app/v1/character-list"
         remaining_characters_call = coreInfo["core_url"] + "api/app/v1/characters"
         groups_call = coreInfo["core_url"] + "api/app/v1/groups"
 
-        character_data = getCoreData(requests.post, characters_call, characters_to_check)
-        characters_to_relink = [returned_data["id"] for returned_data in character_data if not returned_data["main"]]
+        non_mains = []
+        for eachChunk in chunked_characters_to_check:
+            character_data = getCoreData(requests.post, characters_call, eachChunk)
+            non_mains.extend([returned_data["id"] for returned_data in character_data if not returned_data["main"]])
+        chunked_non_mains = [non_mains[x:x+500] for x in range(0, len(non_mains), 500)]
 
-        relink_data = getCoreData(requests.post, remaining_characters_call, characters_to_relink)
-        relink_characters = [each_character for each_account in relink_data for each_character in each_account]
-        relink_character_data = getCoreData(requests.post, characters_call, relink_characters)
-        relink_character_info = {returned_data["id"]: returned_data for returned_data in relink_character_data}
+        all_accounts_of_non_mains = []
+        characters_of_non_mains = []
+        for eachChunk in chunked_non_mains:
+            accounts_of_non_mains = getCoreData(requests.post, remaining_characters_call, eachChunk)
+            all_accounts_of_non_mains.extend(accounts_of_non_mains)
+            characters_of_non_mains.extend([each_character for each_account in accounts_of_non_mains for each_character in each_account])
+        chunked_characters_of_non_mains = [characters_of_non_mains[x:x+500] for x in range(0, len(characters_of_non_mains), 500)]
+
+        associated_characters_of_non_mains_data = {}
+        for eachChunk in chunked_characters_of_non_mains:
+            characters_of_non_mains_data = getCoreData(requests.post, characters_call, eachChunk)
+            associated_characters_of_non_mains_data.update({returned_data["id"]: returned_data for returned_data in characters_of_non_mains_data})
 
         #This is really messy, but it should work
-        final_character_relinks = {
+        characters_to_relink = {
             each_character: [
-                relink_character_info[found_account] 
-                for found_account in each_account if relink_character_info[found_account]["main"]
+                associated_characters_of_non_mains_data[found_account] 
+                for found_account in each_account if associated_characters_of_non_mains_data[found_account]["main"]
             ][0] 
-            for each_account in relink_data for each_character in each_account if each_character in characters_to_relink
+            for each_account in all_accounts_of_non_mains for each_character in each_account if each_character in non_mains
         }
 
-        group_data = getCoreData(requests.post, groups_call, characters_to_check)
-        group_info = {returned_data["character"]["id"]: returned_data["groups"] for returned_data in group_data}
+        associated_group_data = {}
+        for eachChunk in chunked_characters_to_check:
+            group_data = getCoreData(requests.post, groups_call, eachChunk)
+            associated_group_data.update({returned_data["character"]["id"]: returned_data["groups"] for returned_data in group_data})
 
         for id, account_data in accounts.items():
 
-            if account_data.character_id in group_info:
+            if account_data.character_id in associated_group_data:
 
-                accounts[id].core_roles = [each_role["name"] for each_role in group_info[account_data.character_id]]
+                accounts[id].core_roles = [each_role["name"] for each_role in associated_group_data[account_data.character_id]]
 
-            if account_data.character_id in final_character_relinks:
+            if account_data.character_id in characters_to_relink:
 
-                new_character = final_character_relinks[account_data.character_id]
+                new_character = characters_to_relink[account_data.character_id]
 
                 accounts[id].enforced_name = new_character["name"]
 
@@ -320,6 +334,7 @@ def startChecks():
         sum_times.append(time_checkpoints["Time to Fetch Core Accounts"])
         
         print("[" + str(datetime.now()) + "] Updating Account Statuses...")
+        
         
         #############################
         #  UPDATE ACCOUNT STATUSES  #
