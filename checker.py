@@ -155,6 +155,7 @@ def startChecks():
         status_breakdown = {
             "Account Linked": 0, 
             "Character Relinked": 0, 
+            "Relink Conflict Deleted": 0, 
             "Email Changed": 0, 
             "Name Changed": 0, 
             "Account Reactivated": 0, 
@@ -243,9 +244,9 @@ def startChecks():
 
         database_cursor = database_connection.cursor(buffered=True)
 
-        listing_statement = "SELECT character_id FROM invite"
+        listing_statement = "SELECT character_id, character_name, slack_id FROM invite"
         database_cursor.execute(listing_statement)
-        existing_invites = [each_id[0] for each_id in database_cursor.fetchall()]
+        existing_invites = {each_id: {"Name": each_name, "Slack ID": each_slack_id} for each_id, each_name, each_slack_id in database_cursor.fetchall()}
 
         database_cursor.close()
 
@@ -323,7 +324,16 @@ def startChecks():
                 if relinking:
 
                     if new_character["id"] in existing_invites or new_character["id"] in already_relinked:
-                        accounts[id].cannot_relink = True
+                        accounts[id].relink_conflict = True
+                        accounts[id].conflicting_character = new_character["id"]
+
+                        if new_character["id"] not in already_relinked and existing_invites[new_character["id"]]["Slack ID"] is None:
+                            accounts[id].relink = True
+                            accounts[id].conflict_resolvable = True
+                            already_relinked.append(new_character["id"])
+                            accounts[id].character_id = new_character["id"]
+                            accounts[id].character_name = new_character["name"]
+
                     else:
                         accounts[id].relink = True
                         already_relinked.append(new_character["id"])
@@ -357,6 +367,9 @@ def startChecks():
 
             if accounts[account].alert_reason == "Character Relinked":
                 status_breakdown["Character Relinked"] += 1
+
+            if accounts[account].conflict_resolvable:
+                status_breakdown["Relink Conflict Deleted"] += 1
                 
             if accounts[account].email != accounts[account].linked_email and accounts[account].linked_email is not None:
                 status_breakdown["Email Changed"] += 1
@@ -380,6 +393,21 @@ def startChecks():
         #  SEND NOTIFICATIONS  #
         ########################
         for account in accounts:
+
+            if accounts[account].conflict_resolvable:
+
+                admin_conflict_message = Message_Templates.conflict_resolved_admin_message.format(
+                    user_id = accounts[account].id, 
+                    main_name = accounts[account].enforced_name, 
+                    conflict_name = existing_invites[accounts[account].conflicting_character]["Name"]
+                )
+
+                accounts[account].sendAdminMessage(
+                    slack_handler = slack_bot, 
+                    admin_channel = slackInfo["notification_channel"], 
+                    incoming_message = admin_conflict_message, 
+                    debug_mode = debugMode
+                )
         
             if accounts[account].status == "Pending Removal":
                 

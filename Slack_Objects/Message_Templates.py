@@ -44,6 +44,15 @@ Reason For Removal: {reason}
 ```
 """
 
+conflict_resolved_admin_message = """
+An Invite Conflicting With The Slack Account <@{user_id}> Has Been Deleted. 
+```
+Main Character: {main_name}
+Conflicting Invited Character: {conflict_name}
+```
+No action is required in response to this message. 
+"""
+
 removal_user_message = """
 Hello <@{user_id}>, it seems you aren't supposed to be here anymore. You may've left Brave, done something naughty, or not fixed an invalid ESI token in the proper time period. 
 

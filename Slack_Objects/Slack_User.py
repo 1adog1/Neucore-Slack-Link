@@ -19,8 +19,11 @@ class User:
         self.previous_name = None
         
         self.alert_reason = None
+
         self.relink = False
-        self.cannot_relink = False
+        self.relink_conflict = False
+        self.conflict_resolvable = False
+        self.conflicting_character = None
         
         self.core_roles = []
         
@@ -74,7 +77,7 @@ class User:
                 self.status = "Pending Removal"
                 self.alert_reason = "Not Authorized"
 
-            elif self.cannot_relink:
+            elif self.relink_conflict and not self.conflict_resolvable:
 
                 self.status = "Pending Removal"
                 self.alert_reason = "Cannot Be Relinked"
@@ -165,6 +168,11 @@ class User:
         if not debug_mode and self.character_id is not None:
         
             database_cursor = self.database_connection.cursor(buffered=True)
+
+            if self.conflict_resolvable:
+
+                delete_statement = "DELETE FROM invite WHERE character_id=%s ORDER BY invited_at DESC LIMIT 1"
+                database_cursor.execute(delete_statement, (self.conflicting_character,))
         
             if use_email:
             
